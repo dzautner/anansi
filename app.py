@@ -43,16 +43,16 @@ def sms_reply():
         memories[sender_phone_number] = ConversationBufferMemory()
 
     conversation_memory = memories[sender_phone_number]
-    
+
     # Add the incoming message to the conversation history
-    conversation_memory.add_input(incoming_msg)
+    conversation_memory.save_context({"input": incoming_msg}, {"output": ""})
 
     # Generate a response considering the conversation history
-    history = conversation_memory.get_history()
+    history = conversation_memory.load_memory_variables({}).get('history', '')
     response_text = llm.generate(history + '\n' + incoming_msg, max_length=50)
 
     # Add the generated response to the conversation history
-    conversation_memory.add_output(response_text)
+    conversation_memory.save_context({"input": incoming_msg}, {"output": response_text})
 
     # Start our TwiML response
     resp = MessagingResponse()
