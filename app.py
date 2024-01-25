@@ -38,5 +38,21 @@ def twilio_fallback():
     response = "Fallback response goes here"
     return jsonify({"message": response})
 
+# Route to handle Twilio delivery status callback
+@app.route('/twilio/status', methods=['POST'])
+def twilio_delivery_status():
+    # Extract the relevant information from the Twilio callback
+    message_sid = request.form.get('MessageSid')
+    status = request.form.get('MessageStatus')
+
+    # Process the delivery status notification
+    # You can log the message status or take other actions based on it
+
+    # For example, you can log the information
+    print(f"Message SID: {message_sid}, Status: {status}")
+
+    # Respond with a 200 OK status to acknowledge receipt
+    return '', 200
+
 if __name__ == '__main__':
     app.run(debug=True)
