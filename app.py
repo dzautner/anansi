@@ -39,7 +39,7 @@ def twilio_fallback():
     return jsonify({"message": response})
 
 # Route to handle Twilio delivery status callback
-@app.route('/twilio/status', methods=['POST'])
+@app.route('/twilio/status', methods=['POST', 'GET'])
 def twilio_delivery_status():
     # Extract the relevant information from the Twilio callback
     message_sid = request.form.get('MessageSid')
