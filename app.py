@@ -52,7 +52,7 @@ def sms_reply():
     response_text = llm.generate([history + '\n' + incoming_msg], max_tokens=50)
 
     # Add the generated response to the conversation history
-    conversation_memory.save_context({"input": incoming_msg}, {"output": response_text})
+    conversation_memory.save_context({"input": incoming_msg}, {"output": response_text.generations[0][0].text.strip()})
 
     # Start our TwiML response
     resp = MessagingResponse()
