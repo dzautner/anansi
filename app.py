@@ -57,8 +57,11 @@ def sms_reply():
     # Start our TwiML response
     resp = MessagingResponse()
 
-    # Add a message
-    resp.message(response_text)
+    # Correct way to extract text from LLMResult and use it in the response
+    actual_text = response_text.generations[0][0].text.strip()
+
+    # Use the actual text in the Twilio response
+    resp.message(actual_text)
 
     return str(resp)
 
