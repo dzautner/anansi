@@ -1,13 +1,12 @@
+import json
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 from langchain.llms import OpenAI
 from langchain.memory import ConversationBufferMemory
+import pickle
 import os
 
 app = Flask(__name__)
-
-# Memory storage for each phone number
-memories = {}
 
 # Retrieve the API key from the environment variable
 openai_api_key = os.getenv('OPENAI_API_KEY')
@@ -16,9 +15,16 @@ if not openai_api_key:
 
 llm = OpenAI(api_key=openai_api_key)
 
-@app.route('/')
-def hello_world():
-    return 'Hello, World!'
+def save_memory(conversation_memory, file_path):
+    with open(file_path, 'wb') as file:
+        pickle.dump(conversation_memory, file)
+
+def load_memory(file_path):
+    try:
+        with open(file_path, 'rb') as file:
+            return pickle.load(file)
+    except FileNotFoundError:
+        return ConversationBufferMemory()
 
 @app.route('/twilio/status', methods=['POST', 'GET'])
 def twilio_delivery_status():
@@ -41,23 +47,20 @@ def sms_reply():
     # log
     print(f"Received message from {sender_phone_number}: {incoming_msg}")
 
-    # Retrieve or initialize the memory for the sender
-    if sender_phone_number not in memories:
-        memories[sender_phone_number] = ConversationBufferMemory()
-
-    conversation_memory = memories[sender_phone_number]
+    conversation_memory = load_memory(f"/var/data/{sender_phone_number}.pkl")
 
     # Add the incoming message to the conversation history
     conversation_memory.save_context({"input": incoming_msg}, {"output": ""})
 
     # Generate a response considering the conversation history
     history = conversation_memory.load_memory_variables({}).get('history', '')
-    response_text = llm.generate([history + '\n' + incoming_msg], max_tokens=50)
+    response_text = llm.generate([history + '\n' + incoming_msg], max_tokens=66)
 
     print(f"Generated response: {response_text.generations[0][0].text.strip()}")
     # Add the generated response to the conversation history
     conversation_memory.save_context({"input": incoming_msg}, {"output": response_text.generations[0][0].text.strip()})
 
+    save_memory(conversation_memory, f"/var/data/{sender_phone_number}.pkl")
     # Start our TwiML response
     resp = MessagingResponse()
 
