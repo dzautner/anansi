@@ -38,6 +38,9 @@ def sms_reply():
     incoming_msg = request.values.get('Body', '').strip()
     sender_phone_number = request.values.get('From', '')
 
+    # log
+    print(f"Received message from {sender_phone_number}: {incoming_msg}")
+
     # Retrieve or initialize the memory for the sender
     if sender_phone_number not in memories:
         memories[sender_phone_number] = ConversationBufferMemory()
@@ -51,6 +54,7 @@ def sms_reply():
     history = conversation_memory.load_memory_variables({}).get('history', '')
     response_text = llm.generate([history + '\n' + incoming_msg], max_tokens=50)
 
+    print(f"Generated response: {response_text.generations[0][0].text.strip()}")
     # Add the generated response to the conversation history
     conversation_memory.save_context({"input": incoming_msg}, {"output": response_text.generations[0][0].text.strip()})
 
@@ -62,6 +66,8 @@ def sms_reply():
 
     # Use the actual text in the Twilio response
     resp.message(actual_text)
+
+    print(f"Sending response: {actual_text}")
 
     return str(resp)
 
